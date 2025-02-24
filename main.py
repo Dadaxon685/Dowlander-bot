@@ -8,7 +8,7 @@ import yt_dlp
 import asyncio
 logging.basicConfig(level=logging.INFO)
 
-token = "7584542296:AAG52pR5J2tA9FlR4l4Jbf2QdxvnuteHqj4"  # Bu yerga bot tokeningizni kiriting
+token = "7548128169:AAHkI255NhOskgx1uQ6bpzyN7DCMooAUVvE"  # Bu yerga bot tokeningizni kiriting
 
 bot = Bot(token=token)
 dp = Dispatcher()
@@ -16,21 +16,38 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def StartBot(message: Message):
-    await message.answer("Assalomu alaykum, botdan foydalanishingiz mumkin")
+    await message.answer("Assalomu alaykum! Video yuklash uchun menga YouTube havolasini yuboring 🎥")
 
 
 @dp.message(F.text)
-async def YuklaBot(message: Message):
-    link = message.text
-    videos = {"format": "mp4", "outtmpl": "video.%(ext)s"}
+async def yuklab_ber(message: Message):
+    link = message.text.strip()
+    
+    # Yangi nom berish
+    video_name = "downloaded_video.mp4"
+    video_options = {
+        "format": "best",
+        "outtmpl": video_name
+    }
+    
+    try:
+        await message.answer("⏳ Videoni yuklab olish jarayoni boshlandi...")
+        
+        # YouTube'dan video yuklash
+        with yt_dlp.YoutubeDL(video_options) as downloader:
+            downloader.download([link])
+        
+        # Faylni Telegramga yuborish
+        video = FSInputFile(video_name)
+        await message.answer_video(video=video, caption="🎬 Siz so‘ragan video tayyor!")
 
-    with yt_dlp.YoutubeDL(videos) as dow:
-        dow.download([link])
-
-    video = FSInputFile("video.mp4")
-    await message.answer_video(video=video, caption="Siz so‘ragan video")
-
-    os.remove("video.mp4")
+    except Exception as e:
+        await message.answer(f"❌ Xatolik yuz berdi: {str(e)}")
+    
+    finally:
+        # Faylni o‘chirish
+        if os.path.exists(video_name):
+            os.remove(video_name)
 
 
 async def main():
